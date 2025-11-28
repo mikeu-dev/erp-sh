@@ -3,17 +3,22 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Company;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        // Ambil company pertama sebagai default current_company_id
+        $defaultCompany = Company::first();
+
+        if (! $defaultCompany) {
+            $this->command->error('Tidak ada company! Jalankan CompanySeeder terlebih dahulu.');
+            return;
+        }
+
         $users = [
             [
                 'name' => 'Mikeu Dev',
@@ -21,7 +26,6 @@ class UserSeeder extends Seeder
                 'username' => 'mikeudev',
                 'password' => env('DEF_SUPERADMIN'),
                 'role' => 'Super Admin',
-                'email_verified_at' => now()
             ],
             [
                 'name' => 'Administrator',
@@ -29,7 +33,6 @@ class UserSeeder extends Seeder
                 'username' => 'admin',
                 'password' => env('DEF_ADMIN'),
                 'role' => 'Administrator',
-                'email_verified_at' => now()
             ],
             [
                 'name' => 'Developer',
@@ -37,7 +40,6 @@ class UserSeeder extends Seeder
                 'username' => 'developer',
                 'password' => env('DEF_DEV'),
                 'role' => 'Developer',
-                'email_verified_at' => now()
             ],
             [
                 'name' => 'Finance',
@@ -45,7 +47,6 @@ class UserSeeder extends Seeder
                 'username' => 'finance',
                 'password' => env('DEF_FINANCE'),
                 'role' => 'Finance',
-                'email_verified_at' => now()
             ],
             [
                 'name' => 'Internship',
@@ -53,25 +54,30 @@ class UserSeeder extends Seeder
                 'username' => 'intern',
                 'password' => env('DEF_INTERN'),
                 'role' => 'Internship',
-                'email_verified_at' => now()
             ],
         ];
 
-        foreach ($users as $userData) {
+        foreach ($users as $data) {
+
+            // Buat user jika belum ada
             $user = User::firstOrCreate(
                 [
-                    'email' => $userData['email'],
-                    'username' => $userData['username'],
+                    'email' => $data['email'],
+                    'username' => $data['username'],
                 ],
                 [
-                    'name' => $userData['name'],
-                    'email_verified_at' => $userData['email_verified_at'],
-                    'password' => Hash::make($userData['password']),
+                    'name' => $data['name'],
+                    'email_verified_at' => now(),
+                    'password' => Hash::make($data['password']),
+                    'current_company_id' => $defaultCompany->id, // wajib ada
                 ]
             );
 
-            // Assign role menggunakan Spatie Permission
-            $user->assignRole($userData['role']);
+            // Pastikan user terdaftar di pivot company_user
+            $user->companies()->syncWithoutDetaching([$defaultCompany->id]);
+
+            // Assign role
+            $user->assignRole($data['role']);
         }
     }
 }

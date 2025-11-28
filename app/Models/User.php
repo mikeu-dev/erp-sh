@@ -23,6 +23,9 @@ class User extends Authenticatable
         'email',
         'username',
         'password',
+        'current_company_id',
+        'status',
+        'mobile',
     ];
 
     /**
@@ -48,5 +51,15 @@ class User extends Authenticatable
             'mobile' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class);
+    }
+
+    public function currentCompany()
+    {
+        return $this->belongsTo(Company::class, 'current_company_id');
     }
 }
